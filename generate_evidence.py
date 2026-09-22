@@ -261,17 +261,16 @@ label_names = ['Legitimate', 'Traditional Phishing', 'AI-Generated Phishing']
 print(f'\n=== SHAP Example ===')
 print(f'Prediction: {label_names[pred_class]}  (confidence: {probs[pred_class]:.4f})')
 
-class SHAPWrapper(torch.nn.Module):
-    def __init__(self, model):
-        super().__init__()
-        self.model = model
-    def forward(self, input_ids, attention_mask=None):
-        if attention_mask is None:
-            attention_mask = torch.ones_like(input_ids)
-        return self.model(input_ids=input_ids.long(), attention_mask=attention_mask).logits
+def predict_proba(texts):
+    encodings = tokenizer(texts, truncation=True, padding='max_length',
+                          max_length=128, return_tensors='pt')
+    encodings = {k: v.to(device) for k, v in encodings.items()}
+    with torch.no_grad():
+        logits = model(**encodings).logits
+    return torch.softmax(logits, dim=-1).cpu().numpy()
 
-shap_model = SHAPWrapper(model).to(device)
-explainer = shap.Explainer(shap_model, tokenizer, output_names=label_names, seed=42)
+masker = shap.maskers.Text(tokenizer, mask_token='...', collapse_mask_token=True)
+explainer = shap.Explainer(predict_proba, masker, output_names=label_names, seed=42)
 shap_values = explainer([test_text], max_evals=50, batch_size=1)
 
 for class_idx in range(3):
