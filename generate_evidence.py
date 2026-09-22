@@ -262,6 +262,12 @@ print(f'\n=== SHAP Example ===')
 print(f'Prediction: {label_names[pred_class]}  (confidence: {probs[pred_class]:.4f})')
 
 def predict_proba(texts):
+    if isinstance(texts, str):
+        texts = [texts]
+    elif isinstance(texts, np.ndarray):
+        texts = texts.tolist()
+    texts = list(texts)
+    texts = [t if isinstance(t, str) else ' '.join(t) for t in texts]
     encodings = tokenizer(texts, truncation=True, padding='max_length',
                           max_length=128, return_tensors='pt')
     encodings = {k: v.to(device) for k, v in encodings.items()}
