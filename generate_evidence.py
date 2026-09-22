@@ -265,7 +265,9 @@ class SHAPWrapper(torch.nn.Module):
     def __init__(self, model):
         super().__init__()
         self.model = model
-    def forward(self, input_ids, attention_mask):
+    def forward(self, input_ids, attention_mask=None):
+        if attention_mask is None:
+            attention_mask = torch.ones_like(input_ids)
         return self.model(input_ids=input_ids.long(), attention_mask=attention_mask).logits
 
 shap_model = SHAPWrapper(model).to(device)
